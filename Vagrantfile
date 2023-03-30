@@ -1,0 +1,76 @@
+
+# Copyright (c) 2020, 2022, Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+
+# Vagrantfile API/syntax version.
+VAGRANTFILE_API_VERSION = "2"
+
+# Box metadata location and box name
+BOX_URL = "https://oracle.github.io/vagrant-projects/boxes"
+BOX_NAME = "oraclelinux/7"
+
+# define hostname
+NAME = "okit-vagrant"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = BOX_NAME
+  config.vm.box_url = "#{BOX_URL}/#{BOX_NAME}.json"
+  config.vm.define NAME
+
+  # set cpu, memory size and vm name
+  config.vm.provider "virtualbox" do |v|
+    v.cpus = 1
+    v.memory = 1024
+    v.name = NAME
+    # This is the name of the VM in Virtualbox Manager
+    v.customize ["modifyvm", :id, "--name", "OKIT-Vagrant"]
+    # Seems to reduce CPU spikes on macOS. Might be CPU dependant
+    v.customize ["modifyvm", :id, "--nestedpaging", "on"]
+    # Setting the correct and supported graphics controller
+    v.customize ["modifyvm", :id, "--graphicscontroller", "vmsvga"]
+    # Setting the correct minimum video memory
+    v.customize ["modifyvm", :id, "--vram", "16"] 
+    # Disable Audio to prevent CPU spikes
+    v.customize ["modifyvm", :id, "--audio", "none"]
+  end
+  # This will expose the local OKIT Template folder within the VM
+  # config.vm.synced_folder "~/okit/user/templates", "/okit/templates"
+
+  # VM hostname
+  config.vm.hostname = NAME
+
+  # Oracle port forwarding
+  # nginx
+  config.vm.network "forwarded_port", guest: 80, host: 80
+  # Flask
+  # config.vm.network "forwarded_port", guest: 8080, host: 80
+  # GUnicorn, needed?
+  #config.vm.network "forwarded_port", guest: 5000, host: 80
+
+  # Run external install script as root
+  config.vm.provision "shell", inline: "echo '============== Running privileged commands ============== '"
+  config.vm.provision "file", source: "./oci", destination: "/tmp/.oci"
+  config.vm.provision "file", source: "./.ssh", destination: "/tmp/.ssh"
+  config.vm.provision "shell", inline: "mv -v /tmp/.oci /root/.oci", privileged: true
+  config.vm.provision "shell", inline: "mv -v /tmp/.ssh /root/.ssh", privileged: true
+  config.vm.provision "shell", inline: "chown -R root:root /root/.oci", privileged: true
+  config.vm.provision "shell", inline: "chown -R root:root /root/.ssh", privileged: true
+  config.vm.provision "shell", path: "configure_software.sh", privileged: true
+  config.vm.provision "file", source: "nginx.conf", destination: "/tmp/nginx.conf"
+  config.vm.provision "file", source: "gunicorn.service", destination: "/tmp/gunicorn.service"
+  config.vm.provision "file", source: "flask.service", destination: "/tmp/flask.service"
+  config.vm.provision "file", source: "run-server.sh", destination: "/okit/run-server.sh"
+  config.vm.provision "shell", inline: "chmod 777 /okit/run-server.sh", privileged: true
+  # config.vm.provision "shell", path: "enable_flask_service.sh", privileged: true
+  config.vm.provision "shell", path: "enable_gunicorn_service.sh", privileged: true
+  config.vm.provision "shell", path: "configure_firewall.sh", privileged: true
+  config.vm.provision "shell", inline: "echo '============== Finished privileged commands ============== '"
+
+  # Run external install script as vagrant
+  config.vm.provision "shell", inline: "echo '************** Running vagrant user commands ************** '"
+  config.vm.provision "shell", inline: "echo 'export PATH=/usr/local/bin:/opt/python/bin:${PATH}' >> /home/vagrant/.bash_profile", privileged: false
+  config.vm.provision "shell", inline: "echo 'export OCI_CONFIG_DIR=~/.oci' >> /home/vagrant/.bash_profile", privileged: false
+  # config.vm.provision "shell", inline: "ln -s /okit/config ~/.oci", privileged: false
+  config.vm.provision "shell", inline: "echo '************** Finished vagrant user commands ************** '"
+
+end
