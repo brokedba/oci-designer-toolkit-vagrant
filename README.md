@@ -21,4 +21,5 @@ cd oci-designer-toolkit-vagrant\
 ```
   vagrant up & vagrant reload & vagrant ssh
 ```
-  NOTE: This step takes about 30 minutes on my mac when you build the VM, a little longer the first time as the Vbox image is downloaded from github. Once the VM is built the vagrant up should just take a few seconds.
+- Once the Vbox image and the VM built, you can then hit the browser 
+  http://localhost:8080/okit/designer.
