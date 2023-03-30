@@ -1,6 +1,5 @@
 # oci-designer-toolkit-vagrant
 ![image](https://user-images.githubusercontent.com/29458929/228986963-98e3e65e-d66a-4f7a-888a-bc4c1a5526cd.png)
-![image](https://user-images.githubusercontent.com/29458929/228987071-f1d46885-fa8a-4c3e-a4fa-ed0a3fc6a72b.png)
 
 # Vagrant / VirtualBox
 Prerequisites
@@ -69,3 +68,4 @@ cd oci-designer-toolkit-vagrant\
 ```
 - Once the Vbox image and the VM built, you can then hit the browser 
   http://localhost:8080/okit/designer.
+![image](https://user-images.githubusercontent.com/29458929/228987071-f1d46885-fa8a-4c3e-a4fa-ed0a3fc6a72b.png)
